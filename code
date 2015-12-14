@@ -1,0 +1,44 @@
+df=read.table("http://www.utstat.toronto.edu/burkett/sta442f15/joints.txt", header=T,na.strings="DQ")
+df <- within(df, {
+  sticks <- factor(sticks)
+  area <- 9.525 * (caliper - 9.525) + 22.68*pi
+  stress <- 9810 * force / area
+  Break <- relevel(factor(break.), ref = "w")
+  clamp <- relevel(clamp, ref = "X")
+})
+df1 = subset(df,sticks=="2" & colour=="B" & clamp=="C" & overlap=="M")
+fit1 = glm(break. ~ glue,family=binomial,data=df1);anova(fit1)
+1-pchisq(43.785934 ,3)
+exp(summary(fit1)$coefficients[2,1])
+df2 = subset(df,sticks=="2" & colour=="B" & clamp=="C" & overlap=="M" & glue != "H")
+fit2 = glm(break. ~ glue,family=binomial,data=df2);anova(fit2);summary(fit2)
+1-pchisq(22.8232,2)
+# white compared to carpenter ; white compared to gorilla
+exp(summary(fit2)$coefficients[3,1]);exp(summary(fit2)$coefficients[3,1])/exp(summary(fit2)$coefficients[2,1])
+df4=subset(df,colour=="B" & sticks=="2" & overlap=="M" & glue != "H")
+fit3=glm(break. ~ glue+clamp+quality+stress,family=binomial,data=df4)
+exp(coef(fit3))
+exp(confint(fit3))
+summary(fit3)
+
+#cancer (1=Yes, 0=No), Gender (0=M, 1=F), Status (0=Low, 1=High),birdkeepers (1=Yes, 0=No)
+bird=read.table("http://www.utstat.toronto.edu/burkett/sta442f15/birdlung.data",header=F)
+colnames(bird)=c("cancer","gender","status","birdkeepers","age","yearsmoke","cigarettes")
+prop.table(with(bird,table(cancer)))
+fit=glm(cancer~gender+status+birdkeepers+age+yearsmoke+cigarettes,family=binomial,data=bird)
+summary(fit)
+reduced_mod=glm(cancer~ gender+status+age+yearsmoke+cigarettes,family=binomial,data=bird)
+anova(reduced_mod,fit,test="LRT")
+# nosmoking, birdkeeping woman of average age and low status
+l=c(1,1,0,1,mean(bird$age),0,0)
+exp(sum(coef(fit)*l))/(exp(sum(coef(fit)*l))+1)
+# no smoking, no birdkeeping woman of avg age and low status
+ll=c(1,1,0,0,mean(bird$age),0,0)
+exp(sum(coef(fit)*ll))/(exp(sum(coef(fit)*ll))+1)
+new = with(bird,data.frame(gender=1,status=0,birdkeepers=0,age=mean(bird$age),yearsmoke=0,cigarettes=0))
+a=predict(fit,newdata=new,type='link',se=TRUE)
+list(a$fit-(1.96*a$se.fit),a$fit+(1.96*a$se.fit))
+exp(-5.352091)/(1+exp(-5.352091))
+exp(-1.929495)/(1+exp(-1.92949))
+anova(fit,test="LRT")
+
